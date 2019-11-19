@@ -1,0 +1,9 @@
+/Debug/
+/.settings/
+.cproject
+/.launches/
+.project
+.ccsproject
+/targetConfigs/
+*.cmd
+.DS_Store
