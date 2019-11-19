@@ -1,4 +1,8 @@
 #include <msp430.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 #define pos1 4                                                 // Digit A1 - L4
 #define pos2 6                                                 // Digit A2 - L6
@@ -9,10 +13,127 @@
 // Define word access definitions to LCD memories
 #define LCDMEMW ((int*)LCDMEM)
 #define LCDBMEMW ((int*)LCDBMEM)
+#define STEPPER_PIN_1 1
+#define STEPPER_PIN_2 2
+#define STEPPER_PIN_3 3
+#define STEPPER_PIN_4 4
+
+volatile int step_number_x = 0;
+volatile int step_number_y = 0;
 
 
-const char digit_7seg[12] =
-        { 0xFC,                                            // "0"
+void setPin(int pinNumber, bool isOn)
+{
+    if (isOn)
+    {
+        switch (pinNumber)
+        {
+        case 1:
+            P5OUT |= BIT1; // Set P5.1 to output direction A
+            break;
+        case 2:
+            P2OUT |= BIT5; // Set P2.5 to output direction B
+            break;
+        case 3:
+            P8OUT |= BIT2;  // Set P8.2 to output direction
+            break;
+        case 4:
+            P8OUT |= BIT3;  // Set P8.3 to output direction
+            break;
+        }
+    }
+    else
+    {
+        switch (pinNumber)
+        {
+        case 1:
+            P5OUT &= ~BIT1;
+            break;
+        case 2:
+            P2OUT &= ~BIT5;
+            break;
+        case 3:
+            P8DIR &= ~BIT2;
+            break;
+        case 4:
+            P8OUT &= ~BIT3;
+            break;
+        }
+    }
+}
+
+
+void OneStep(bool dir)
+{
+    if (dir)
+    {
+        switch (step_number_x)
+        {
+        case 0:
+            setPin(STEPPER_PIN_1, true);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, false);
+            break;
+        case 1:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, true);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, false);
+            break;
+        case 2:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, true);
+            setPin(STEPPER_PIN_4, false);
+            break;
+        case 3:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, true);
+            break;
+        }
+    }
+    else
+    {
+        switch (step_number_x)
+        {
+        case 0:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, true);
+            break;
+        case 1:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, true);
+            setPin(STEPPER_PIN_4, false);
+            break;
+        case 2:
+            setPin(STEPPER_PIN_1, false);
+            setPin(STEPPER_PIN_2, true);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, false);
+            break;
+        case 3:
+            setPin(STEPPER_PIN_1, true);
+            setPin(STEPPER_PIN_2, false);
+            setPin(STEPPER_PIN_3, false);
+            setPin(STEPPER_PIN_4, false);
+
+        }
+    }
+    step_number_x++;
+    if (step_number_x > 3)
+    {
+        step_number_x = 0;
+    }
+}
+
+
+const char digit_7seg[12] = { 0xFC,                                       // "0"
         0x60,                                                      // "1"
         0xDB,                                                      // "2"
         0xF3,                                                      // "3"
@@ -26,87 +147,121 @@ const char digit_7seg[12] =
         0X03                                                        //"-"
         };
 
-const char digit[11][2] =
-{
-    {0xFC, 0x28},  /* "0" LCD segments a+b+c+d+e+f+k+q */
-    {0x60, 0x20},  /* "1" */
-    {0xDB, 0x00},  /* "2" */
-    {0xF3, 0x00},  /* "3" */
-    {0x67, 0x00},  /* "4" */
-    {0xB7, 0x00},  /* "5" */
-    {0xBF, 0x00},  /* "6" */
-    {0xE4, 0x00},  /* "7" */
-    {0xFF, 0x00},  /* "8" */
-    {0xF7, 0x00},   /* "9" */
-    {0x03, 0x00}   /* "-" */
+const char digit[11][2] = { { 0xFC, 0x28 }, /* "0" LCD segments a+b+c+d+e+f+k+q */
+                            { 0x60, 0x20 }, /* "1" */
+                            { 0xDB, 0x00 }, /* "2" */
+                            { 0xF3, 0x00 }, /* "3" */
+                            { 0x67, 0x00 }, /* "4" */
+                            { 0xB7, 0x00 }, /* "5" */
+                            { 0xBF, 0x00 }, /* "6" */
+                            { 0xE4, 0x00 }, /* "7" */
+                            { 0xFF, 0x00 }, /* "8" */
+                            { 0xF7, 0x00 }, /* "9" */
+                            { 0x03, 0x00 } /* "-" */
 
 };
 
-const char alphabetBig[26][2] =
-{
-    {0xEF, 0x00},  /* "A" LCD segments a+b+c+e+f+g+m */
-    {0xF1, 0x50},  /* "B" */
-    {0x9C, 0x00},  /* "C" */
-    {0xF0, 0x50},  /* "D" */
-    {0x9F, 0x00},  /* "E" */
-    {0x8F, 0x00},  /* "F" */
-    {0xBD, 0x00},  /* "G" */
-    {0x6F, 0x00},  /* "H" */
-    {0x90, 0x50},  /* "I" */
-    {0x78, 0x00},  /* "J" */
-    {0x0E, 0x22},  /* "K" */
-    {0x1C, 0x00},  /* "L" */
-    {0x6C, 0xA0},  /* "M" */
-    {0x6C, 0x82},  /* "N" */
-    {0xFC, 0x00},  /* "O" */
-    {0xCF, 0x00},  /* "P" */
-    {0xFC, 0x02},  /* "Q" */
-    {0xCF, 0x02},  /* "R" */
-    {0xB7, 0x00},  /* "S" */
-    {0x80, 0x50},  /* "T" */
-    {0x7C, 0x00},  /* "U" */
-    {0x0C, 0x28},  /* "V" */
-    {0x6C, 0x0A},  /* "W" */
-    {0x00, 0xAA},  /* "X" */
-    {0x00, 0xB0},  /* "Y" */
-    {0x90, 0x28}   /* "Z" */
+const char alphabetBig[26][2] = { { 0xEF, 0x00 }, /* "A" LCD segments a+b+c+e+f+g+m */
+                                  { 0xF1, 0x50 }, /* "B" */
+                                  { 0x9C, 0x00 }, /* "C" */
+                                  { 0xF0, 0x50 }, /* "D" */
+                                  { 0x9F, 0x00 }, /* "E" */
+                                  { 0x8F, 0x00 }, /* "F" */
+                                  { 0xBD, 0x00 }, /* "G" */
+                                  { 0x6F, 0x00 }, /* "H" */
+                                  { 0x90, 0x50 }, /* "I" */
+                                  { 0x78, 0x00 }, /* "J" */
+                                  { 0x0E, 0x22 }, /* "K" */
+                                  { 0x1C, 0x00 }, /* "L" */
+                                  { 0x6C, 0xA0 }, /* "M" */
+                                  { 0x6C, 0x82 }, /* "N" */
+                                  { 0xFC, 0x00 }, /* "O" */
+                                  { 0xCF, 0x00 }, /* "P" */
+                                  { 0xFC, 0x02 }, /* "Q" */
+                                  { 0xCF, 0x02 }, /* "R" */
+                                  { 0xB7, 0x00 }, /* "S" */
+                                  { 0x80, 0x50 }, /* "T" */
+                                  { 0x7C, 0x00 }, /* "U" */
+                                  { 0x0C, 0x28 }, /* "V" */
+                                  { 0x6C, 0x0A }, /* "W" */
+                                  { 0x00, 0xAA }, /* "X" */
+                                  { 0x00, 0xB0 }, /* "Y" */
+                                  { 0x90, 0x28 } /* "Z" */
 };
+
+
 
 const int keypad_value[4][3] = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 }, { 0, 0,
                                                                           1 } };
+
+
+void set_output_mode()
+{
+    showChar('O', pos1);
+    showChar('U', pos2);
+    showChar('T', pos3);
+    showChar('P', pos4);
+    showChar('U', pos5);
+    showChar('T', pos6);
+
+    //Disable pulldown resistors
+    P5REN &= ~BIT3;
+    P1REN &= ~BIT3;
+    P1REN &= ~BIT4;
+    P1REN &= ~BIT5;
+
+    // 5.1,2.5,8.2,8.3 J1 MOTORX
+    P5DIR |= BIT1; //A
+    P2DIR |= BIT5; //B
+    P8DIR |= BIT2; //C
+    P8DIR |= BIT3; //D
+
+    //5.3 1.3 1.4 1.5 J2 MOTORY
+    P5DIR |= BIT3; //A
+    P1DIR |= BIT3; //B
+    P1DIR |= BIT4; //C
+    P1DIR |= BIT5; //D
+
+    //enable motor drivers
+    //set pin5.2 to high
+    P5DIR |= BIT2;
+    P5OUT |= BIT2;
+
+}
 void showChar(char c, int position)
 {
     if (c == ' ')
     {
         // Display space
-        LCDMEMW[position/2] = 0;
+        LCDMEMW[position / 2] = 0;
     }
     else if (c >= '0' && c <= '9')
     {
         // Display digit
-        LCDMEMW[position/2] = digit[c-48][0] | (digit[c-48][1] << 8);
+        LCDMEMW[position / 2] = digit[c - 48][0] | (digit[c - 48][1] << 8);
     }
     else if (c == '-')
     {
         // Display digit
-        LCDMEMW[position/2] = digit[10-48][0] | (digit[10-48][1] << 8);
+        LCDMEMW[position / 2] = digit[10 - 48][0] | (digit[10 - 48][1] << 8);
     }
     else if (c >= 'A' && c <= 'Z')
     {
         // Display alphabet
-        LCDMEMW[position/2] = alphabetBig[c-65][0] | (alphabetBig[c-65][1] << 8);
+        LCDMEMW[position / 2] = alphabetBig[c - 65][0]
+                | (alphabetBig[c - 65][1] << 8);
     }
     else
     {
         // Turn all segments on if character is not a space, digit, or uppercase letter
-        LCDMEMW[position/2] = 0xFFFF;
+        LCDMEMW[position / 2] = 0xFFFF;
     }
 }
 
 void set_input_mode()
 {
 
-//    LCDMEMCTL |= LCDCLRM; //clear the LCD
+    //    LCDMEMCTL |= LCDCLRM; //clear the LCD
 
     //set rows to inputs
     P5DIR &= ~BIT3;
@@ -125,26 +280,37 @@ void set_input_mode()
     P1REN |= BIT4;
     P1REN |= BIT5;
 
+    //disable motor drivers
+    //set pin5.2 to low
+    P5DIR |= BIT2;
+    P5OUT &= ~BIT2;
+
 }
 
 void display_on_lcd(int x, int y)
 {
-    if (x<0){
+    if (x < 0)
+    {
         x = -x;
         //showChar('-', pos1);
         LCDMEM[pos1] = digit_7seg[11];
-    }else {
+    }
+    else
+    {
         showChar(' ', pos1);
     }
     int x1 = x / 10;
     int x2 = x % 10;
 
-    if (y<0){
+    if (y < 0)
+    {
         y = -y;
         //showChar('-', pos4);
         LCDMEM[pos4] = digit_7seg[11];
-    }else {
-        showChar(' ',pos4);
+    }
+    else
+    {
+        showChar(' ', pos4);
     }
     int y1 = y / 10;
     int y2 = y % 10;
@@ -154,12 +320,12 @@ void display_on_lcd(int x, int y)
     showChar(y1 + '0', pos5);
     showChar(y2 + '0', pos6);
 
-
     LCDCTL0 |= LCD4MUX | LCDON;  // Turn on LCD, 4-mux selected
 
 }
 
-void clear_lcd(){
+void clear_lcd()
+{
 
     showChar(' ', pos1);
     showChar(' ', pos2);
@@ -237,18 +403,21 @@ int take_input()
         column++;
     }
 
-    return (digit1*10)+digit2;
+    return (digit1 * 10) + digit2;
 }
 
-int check_negative(){
+int check_negative()
+{
 
     int is_negative = 0;
     int stored = 0;
     int column = 0;
 
-    while(1){
+    while (1)
+    {
 
-        if (column>=3){
+        if (column >= 3)
+        {
             column = 0;
         }
         int row = -1;
@@ -260,7 +429,8 @@ int check_negative(){
 
         }
 
-        if (stored == 1){
+        if (stored == 1)
+        {
             is_negative = keypad_value[row][column];
             __delay_cycles(500000);
             break;
@@ -347,10 +517,10 @@ int main(void)
     showChar('N', pos1);
     int is_negative_x = check_negative();
 
-
     showChar('X', pos1);
     int x = take_input();
-    if (is_negative_x == 1){
+    if (is_negative_x == 1)
+    {
         x = -x;
     }
 
@@ -359,7 +529,8 @@ int main(void)
     int is_negative_y = check_negative();
     showChar('Y', pos1);
     int y = take_input();
-    if (is_negative_y == 1){
+    if (is_negative_y == 1)
+    {
         y = -y;
     }
 
@@ -368,16 +539,23 @@ int main(void)
     //clear particularly the first bit
     showChar(' ', pos1);
 
-    display_on_lcd(x,y);
+    display_on_lcd(x, y);
+
+    __delay_cycles(1000000);
+
+    set_output_mode();
+
+    while (1)
+    {
+        __delay_cycles(100000);
+        OneStep(1);
+    }
 
     /*INPUT MODE DONE AT THIS POINT START OUTPUT MODE */
 
     // step motor X, X number of times
     // step motor Y, Y number of times
-
     //if value reaches over a current value
-
-
 
     PMMCTL0_H = PMMPW_H;                         // Open PMM Registers for write
     PMMCTL0_L |= PMMREGOFF_L;                               // and set PMMREGOFF
