@@ -5,10 +5,45 @@
 char *x ;
 int counter = 0;
 char recieved_data[10];
+char current_number[3];
+int current_is_negative = 0;
+int coordinates[10] = {0,0,0,0,0,0,0,0,0,0};
+int coordinate_counter = 0;
+int digit_counter = 0;
+int digit1 = 0;
+int digit2 = 0;
+int digit3 = 0;
+
+const char digit_7seg[12] = { 0xFC,                                       // "0"
+        0x60,                                                      // "1"
+        0xDB,                                                      // "2"
+        0xF3,                                                      // "3"
+        0x67,                                                      // "4"
+        0xB7,                                                      // "5"
+        0xBF,                                                      // "6"
+        0xE4,                                                      // "7"
+        0xFF,                                                      // "8"
+        0xF7,                                                      // "9"
+        0x0,                                                        // " "
+        0X03                                                        //"-"
+        };
+
 uint8_t y;
 
 const int keypad_value[4][3] = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 }, { 0, 0,
                                                                           1 } };
+
+void clear_lcd()
+{
+
+    showChar(' ', pos1);
+    showChar(' ', pos2);
+    showChar(' ', pos3);
+    showChar(' ', pos4);
+    showChar(' ', pos5);
+    showChar(' ', pos6);
+
+}
 
 char ADCState = 0; //Busy state of the ADC
 int16_t ADCResult = 0; //Storage for the ADC conversion result
@@ -42,13 +77,22 @@ void main(void)
     x = "Hello";
     //Init_UART();
 
-    while(1) //Do this when you want an infinite loop of code
-    {
+
+    while (coordinate_counter<3){
+        if (coordinate_counter%2 == 0){
+            showChar('X', pos1);
+        }
+        else{
+            showChar('Y', pos1);
+        }
     }
+
 
 
         int x_1 = recieved_data[0] - '0';
         int x_2 = atoi(recieved_data[1]);
+
+
 
 
 }
@@ -125,16 +169,67 @@ void EUSCIA0_ISR(void)
 
     if (RxStatus && counter<10)
     {
-        x = 1;
+
         EUSCI_A_UART_transmitData(EUSCI_A0_BASE, EUSCI_A_UART_receiveData(EUSCI_A0_BASE));
-        recieved_data[counter] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+
+        //current_number[digitCounter] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
         //int display = atoi(recieved_data[counter]);
-        showChar(recieved_data[counter], pos1);
 
-        //displayScrollText(recieved_data[counter]);
-        counter++;
+        if (digit_counter == 0 ){
+            if (EUSCI_A_UART_receiveData(EUSCI_A0_BASE) == 45){
+                showChar('N', pos2);
+                current_is_negative = 1;
+                digit_counter ++;
 
-        //displayScrollText("%test");
+            }
+            else{
+                current_number[0] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+                showChar(current_number[0],pos3);
+                digit_counter = digit_counter+2;
+            }
+
+        }
+        else if (digit_counter == 1){
+            //negative number
+            current_number[0] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+            showChar(current_number[0],pos3);
+            digit_counter++;
+        }
+        else if (digit_counter == 2){
+            current_number[1] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+            showChar(current_number[1],pos4);
+            digit_counter++;
+
+
+        }
+        else if (digit_counter == 3){
+            current_number[2] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+            showChar(current_number[2],pos5);
+            __delay_cycles(250000);
+            digit_counter++;
+
+
+        }
+
+
+        if (digit_counter == 4){
+            //store the number as an integer
+
+            //digit1 = atoi(&current_number[0]) ;
+            //digit2 = atoi(&current_number[1]) ;
+            //digit3 = atoi(&current_number[2]);
+            digit1 = atoi(&current_number[0]);
+            coordinates[coordinate_counter] = digit1 ;
+            if (current_is_negative == 1){
+                coordinates[coordinate_counter] = digit1*(-1) ;
+            }
+            __delay_cycles(250000);
+            clear_lcd();
+            coordinate_counter++;
+            digit_counter = 0;
+            current_is_negative = 0;
+            current_number[0] = 0;
+        }
 
     }
 }
