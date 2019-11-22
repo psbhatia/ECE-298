@@ -34,8 +34,8 @@ volatile int step_number_x = 0;
 volatile int step_number_y = 0;
 
 //These are the global x and y values
-int currentX = 0; // Assuming the plotter starts at x-origin
-int currentY = 0; // Assuming the plotter starts at y-origin
+int currentX = 10000; // Assuming the plotter starts at x-origin
+int currentY = 10000; // Assuming the plotter starts at y-origin
 
 typedef struct Point
 {
@@ -297,7 +297,7 @@ void OneStepX(bool dir)
         step_number_x = 0;
     }
     //TODO: display x and y values to the LCD upon success of stepping the motor.
-    display_on_lcd(currentX / 100, currentY / 100);
+    display_on_lcd((currentX - 10000) / 100 + 1, (currentY - 10000) / 100 + 1);
 }
 
 // 0 is CCW
@@ -369,7 +369,8 @@ void OneStepY(bool dir)
         step_number_y = 0;
     }
     //TODO: display x and y values to the LCD upon success of stepping the motor.
-    display_on_lcd(currentX / 100, currentY / 100);
+    display_on_lcd(((currentX - 10000) / 100) + 1,
+                   ((currentY - 10000) / 100) + 1);
 }
 
 int stepMotor(int axis, bool direction)
@@ -603,20 +604,24 @@ void main(void)
 
     set_output_mode();
 //
-    Point point1 = { coordinates[0] * 100, coordinates[1] * 100 };
-    Point point2 = { coordinates[2] * 100, coordinates[3] * 100 };
-    Point point3 = { coordinates[4] * 100, coordinates[5] * 100 };
-    Point point4 = { coordinates[6] * 100, coordinates[7] * 100 };
-    Point point5 = { coordinates[8] * 100, coordinates[9] * 100 };
+    Point point1 =
+            { coordinates[0] * 100 + 10000, coordinates[1] * 100 + 10000 };
+    Point point2 =
+            { coordinates[2] * 100 + 10000, coordinates[3] * 100 + 10000 };
+    Point point3 =
+            { coordinates[4] * 100 + 10000, coordinates[5] * 100 + 10000 };
+    Point point4 =
+            { coordinates[6] * 100 + 10000, coordinates[7] * 100 + 10000 };
+    Point point5 =
+            { coordinates[8] * 100 + 10000, coordinates[9] * 100 + 10000 };
     gotoPoint(point1);
     gotoPoint(point2);
     gotoPoint(point3);
     gotoPoint(point4);
     gotoPoint(point5);
-//    gotoPointHelper(2000, 5000);
-//    gotoPointHelper(3* 100, 2* 100);
-//    gotoPointHelper(0, 0);
 
+//    Point testPoint1 = {(-4 * 100) + 10000, (-5 * 100) + 10000};
+//    gotoPoint(testPoint1);
 }
 
 /* UART Initialization */
