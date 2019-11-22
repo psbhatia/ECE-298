@@ -489,11 +489,23 @@ int gotoPoint(Point point)
 
     int x = currentX;
 
-    for (; x < point.x; x++)
+    if (x <= point.x)
     {
-        float y = (float) oldY
-                + (float) dy * ((float) x - (float) oldX) / (float) dx;
-        gotoPointHelper(x, (int) y);
+        for (; x < point.x; x++)
+        {
+            float y = (float) oldY
+                    + (float) dy * ((float) x - (float) oldX) / (float) dx;
+            gotoPointHelper(x, (int) y);
+        }
+    }
+    else
+    {
+        for (; x > point.x; x--)
+        {
+            float y = (float) oldY
+                    + (float) dy * ((float) x - (float) oldX) / (float) dx;
+            gotoPointHelper(x, (int) y);
+        }
     }
 
     //Calculate distance using pythagorean theorem:
@@ -587,15 +599,23 @@ void main(void)
 
     displayScrollText("OUTPUT");
 
-    display_on_lcd((int) sqrt(2), 6);
+//    display_on_lcd((int) sqrt(2), 6);
 
     set_output_mode();
 //
-    Point point = { 200, 1000 };
-//    gotoPoint(point);
+    Point point1 = { coordinates[0] * 100, coordinates[1] * 100 };
+    Point point2 = { coordinates[2] * 100, coordinates[3] * 100 };
+    Point point3 = { coordinates[4] * 100, coordinates[5] * 100 };
+    Point point4 = { coordinates[6] * 100, coordinates[7] * 100 };
+    Point point5 = { coordinates[8] * 100, coordinates[9] * 100 };
+    gotoPoint(point1);
+    gotoPoint(point2);
+    gotoPoint(point3);
+    gotoPoint(point4);
+    gotoPoint(point5);
 //    gotoPointHelper(2000, 5000);
-    gotoPoint(point);
-
+//    gotoPointHelper(3* 100, 2* 100);
+//    gotoPointHelper(0, 0);
 
 }
 
