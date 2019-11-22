@@ -479,7 +479,7 @@ bool gotoPointHelper(const int x, const int y)
     return true;
 }
 
-float gotoPoint(Point point)
+int gotoPoint(Point point)
 {
     int oldX = currentX; // OldX is the original y-coordinate of the motor
     int oldY = currentY; // OldY is the original y-coordinate of the motor
@@ -497,7 +497,8 @@ float gotoPoint(Point point)
     }
 
     //Calculate distance using pythagorean theorem:
-    return (float) sqrt(pow(dx, 2) + pow(dy, 2));
+//    return (float) sqrt(pow(dx, 2) + pow(dy, 2));
+    return 0;
 }
 
 void set_output_mode()
@@ -586,16 +587,15 @@ void main(void)
 
     displayScrollText("OUTPUT");
 
-    display_on_lcd(-5, 6);
+    display_on_lcd((int) sqrt(2), 6);
 
     set_output_mode();
 //
     Point point = { 200, 1000 };
 //    gotoPoint(point);
-    while (1)
-    {
-        stepMotor(X, CW);
-    }
+//    gotoPointHelper(2000, 5000);
+    gotoPoint(point);
+
 
 }
 
