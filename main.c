@@ -58,7 +58,7 @@ void main(void)
 
     displayScrollText("ECE 298");
     x = "Hello";
-    Init_UART();
+    //Init_UART();
 
     while(1) //Do this when you want an infinite loop of code
     {
@@ -226,7 +226,8 @@ void EUSCIA0_ISR(void)
     {
         x = 1;
         EUSCI_A_UART_transmitData(EUSCI_A0_BASE, EUSCI_A_UART_receiveData(EUSCI_A0_BASE));
-        displayScrollText(56);
+        y = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+        //displayScrollText("%test");
     }
 }
 
