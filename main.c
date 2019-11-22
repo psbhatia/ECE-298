@@ -3,6 +3,8 @@
 #include "hal_LCD.h"
 
 char *x ;
+int counter = 0;
+uint8_t recieved_data[10];
 uint8_t y;
 
 /*
@@ -84,7 +86,12 @@ void main(void)
 
         //y = y+ '0';
         displayScrollText("x");
+        if (counter == 10){
+            break;
+        }
     }
+
+    while(1){}
 
     /*
      * You can use the following code if you plan on only using interrupts
@@ -211,6 +218,7 @@ void Init_UART(void)
     EUSCI_A_UART_enableInterrupt(EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
 
 
+
 }
 
 /* EUSCI A0 UART ISR - Echoes data back to PC host */
@@ -222,11 +230,12 @@ void EUSCIA0_ISR(void)
 
     EUSCI_A_UART_clearInterrupt(EUSCI_A0_BASE, RxStatus);
 
-    if (RxStatus)
+    if (RxStatus && counter<10)
     {
         x = 1;
         EUSCI_A_UART_transmitData(EUSCI_A0_BASE, EUSCI_A_UART_receiveData(EUSCI_A0_BASE));
-        y = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+        recieved_data[counter] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+        counter++;
         //displayScrollText("%test");
     }
 }
