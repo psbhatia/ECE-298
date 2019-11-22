@@ -177,7 +177,8 @@ void EUSCIA0_ISR(void)
 
         if (digit_counter == 0 ){
             if (EUSCI_A_UART_receiveData(EUSCI_A0_BASE) == 45){
-                showChar('N', pos2);
+//                showChar('N', pos2);
+                LCDMEM[pos2] = digit_7seg[11];
                 current_is_negative = 1;
                 digit_counter ++;
 
@@ -193,6 +194,7 @@ void EUSCIA0_ISR(void)
             //negative number
             current_number[0] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
             showChar(current_number[0],pos3);
+//            LCDMEM[pos3] = digit_7seg[11];
             digit_counter++;
         }
         else if (digit_counter == 2){
