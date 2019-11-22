@@ -204,17 +204,17 @@ void EUSCIA0_ISR(void)
 
 
         }
-        else if (digit_counter == 3){
-            current_number[2] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
-            showChar(current_number[2],pos5);
-            __delay_cycles(250000);
-            digit_counter++;
+//        else if (digit_counter == 3){
+//            current_number[2] = EUSCI_A_UART_receiveData(EUSCI_A0_BASE);
+//            showChar(current_number[2],pos5);
+//            __delay_cycles(250000);
+//            digit_counter++;
+//
+//
+//        }
 
 
-        }
-
-
-        if (digit_counter == 4){
+        if (digit_counter == 3){
             //store the number as an integer
 
             //digit1 = atoi(&current_number[0]) ;
